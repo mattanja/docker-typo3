@@ -1,0 +1,36 @@
+version: "3"
+
+# Usage: Create ".env" file in any empty folder and execute "docker-compose -f ../../docker-compose.yml up"
+
+services:
+  web:
+    build: ./${TYPO3_VERSION-8.7}/ # Defaults to latest version
+    restart: always
+    ports:
+      - "${WEB_PORT}:80"
+    volumes:
+      - ${DATA_DIR}typo3/fileadmin:/var/www/html/fileadmin
+      - ${DATA_DIR}typo3/typo3conf:/var/www/html/typo3conf
+      - ${DATA_DIR}typo3/typo3temp:/var/www/html/typo3temp
+      - ${DATA_DIR}typo3/uploads:/var/www/html/uploads
+  db:
+    image: mariadb:latest
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0
+    restart: always    
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=typo3
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=typo3
+    volumes:
+      - db:/var/lib/mysql:rw
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - ${PHPMYADMIN_PORTMAP}
+    volumes:
+      - /sessions
+
+volumes:
+  db:
+    driver: local
